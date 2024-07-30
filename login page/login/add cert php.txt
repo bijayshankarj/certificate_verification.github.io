@@ -1,0 +1,90 @@
+<?php
+session_start();
+
+include('../connection.php');
+// echo $_SESSION["id"];
+
+if($_SESSION["id"] != 1 || $_SESSION["id"] != '1')
+{  
+   $errors[] = "Login is required.";
+	header("Location: http://localhost/login%20page/login/index.php");
+}
+/*=======================================================================================*/
+
+
+// Check if user is logged in and session is active
+if (isset($_SESSION['start']) && (time() - $_SESSION['start'] > $_SESSION['inactive'])) {
+  session_destroy();
+  header("Location: http://localhost/login%20page/login");
+  exit;
+}
+
+/*=======================================================================================*/
+if (isset($_POST['submit']))
+{
+   $message ='';
+extract($_POST);
+
+// $sql = "SELECT * FROM certificate_tbl WHERE certificate_code LIKE '%$key%' LIMIT 1";
+$sql1 = "SELECT * FROM certificate_tbl WHERE certificate_code = '$certificate_code'";
+$result = $conn->query($sql1);
+if ($result->num_rows > 0){
+        $message = '<div class="alert alert-danger alert-dismissible">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  <strong>Error!</strong> Certificate code already exists.
+</div>';
+}else{
+
+$target_dir = "upload/";
+$uploadOk = 1;
+
+$filename   = uniqid() . "-" . time(); // 5dab1961e93a7-1571494241
+$extension  = pathinfo( $_FILES["upload_certificate"]["name"], PATHINFO_EXTENSION ); // jpg
+$basename   = $filename . "." . $extension; // 5dab1961e93a7_1571494241.jpg
+
+$source       = $_FILES["upload_certificate"]["tmp_name"];
+$target_file = $target_dir . $basename;
+$imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+
+// echo $target_file;die();
+// Allow certain file formats
+if($imageFileType != "pdf") {
+  $message = '<div class="alert alert-danger alert-dismissible">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  <strong>Error!</strong> Sorry, only pdf files are allowed.
+</div>';
+  $uploadOk = 0;
+}
+// Check if $uploadOk is set to 0 by an error
+if ($uploadOk == 0) {
+  $message = '<div class="alert alert-danger alert-dismissible">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  <strong>Error!</strong> Sorry, your file was not uploaded.
+</div>';
+// if everything is ok, try to upload file
+} else {
+  if (move_uploaded_file($_FILES["upload_certificate"]["tmp_name"], $target_file))
+  {
+      $sql = "INSERT INTO certificate_tbl (name, fatherName,
+      address,admission_date,courseComplete,course_name,faculty_name,certificate_code,certificate_status,upload_certificate)
+      VALUES ('$name', '$fatherName', '$address', '$addmission_date', '$courseComplate', '$course_name', '$faculty_name','$certificate_code', '$certificate_status', '$target_file')";
+
+      if ($conn->query($sql) === TRUE) {
+        $message = '<div class="alert alert-success alert-dismissible">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  <strong>Success! </strong> Data added successfully.
+</div>';
+      } else {
+        $message = "Error: " . $sql . "<br>" . $conn->error;
+      }
+// }
+  } else {
+    $message = '<div class="alert alert-danger alert-dismissible">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  <strong>Error!</strong> Sorry, there was an error uploading your file.
+</div>';
+  }
+}
+}
+}
+?>	
